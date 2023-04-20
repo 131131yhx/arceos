@@ -8,7 +8,7 @@ use crate::task::{CurrentTask, TaskState};
 use crate::{AxTaskRef, Scheduler, TaskInner, WaitQueue};
 
 // TODO: per-CPU
-pub(crate) static RUN_QUEUE: LazyInit<SpinNoIrq<AxRunQueue>> = LazyInit::new();
+pub(crate) static RUN_QUEUE: [LazyInit<SpinNoIrq<AxRunQueue>>; axconfig::SMP] = [LazyInit::new(); axconfig::SMP];
 
 // TODO: per-CPU
 static EXITED_TASKS: SpinNoIrq<VecDeque<AxTaskRef>> = SpinNoIrq::new(VecDeque::new());
@@ -202,7 +202,7 @@ impl AxRunQueue {
     }
 }
 
-fn gc_entry() {
+fn gc_entry(cpu_id: usize) {
     loop {
         // Drop all exited tasks and recycle resources.
         while !EXITED_TASKS.lock().is_empty() {
@@ -216,13 +216,13 @@ fn gc_entry() {
                 drop(task);
             }
         }
-        WAIT_FOR_EXIT.wait();
+        WAIT_FOR_EXIT.wait(cpu_id);
     }
 }
 
 cfg_if::cfg_if! {
 if #[cfg(feature = "sched_cfs")] {
-    pub(crate) fn init() {
+    pub(crate) fn init(cpu_id: usize) {
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE, 0);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
@@ -230,11 +230,11 @@ if #[cfg(feature = "sched_cfs")] {
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
 
-        RUN_QUEUE.init_by(AxRunQueue::new(0));
+        RUN_QUEUE[cpu_id].init_by(AxRunQueue::new(0));
         unsafe { CurrentTask::init_current(main_task) }
     }
 } else if #[cfg(feature = "sched_rms")] {
-    pub(crate) fn init() {
+    pub(crate) fn init(cpu_id: usize) {
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE, 0, 1);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
@@ -242,11 +242,11 @@ if #[cfg(feature = "sched_cfs")] {
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     
-        RUN_QUEUE.init_by(AxRunQueue::new(0, 1));
+        RUN_QUEUE[cpu_id].init_by(AxRunQueue::new(0, 1));
         unsafe { CurrentTask::init_current(main_task) }
     }
 } else {
-    pub(crate) fn init() {
+    pub(crate) fn init(cpu_id: usize) {
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
@@ -254,7 +254,7 @@ if #[cfg(feature = "sched_cfs")] {
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     
-        RUN_QUEUE.init_by(AxRunQueue::new());
+        RUN_QUEUE[cpu_id].init_by(AxRunQueue::new());
         unsafe { CurrentTask::init_current(main_task) }
     }
 }

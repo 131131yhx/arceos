@@ -39,20 +39,20 @@ impl WaitQueue {
         }
     }
 
-    pub fn wait(&self) {
-        RUN_QUEUE.lock().block_current(|task| {
+    pub fn wait(&self, cpu_id: usize) {
+        RUN_QUEUE[cpu_id].lock().block_current(|task| {
             task.set_in_wait_queue(true);
             self.queue.lock().push_back(task)
         });
         self.cancel_events(crate::current());
     }
 
-    pub fn wait_until<F>(&self, condition: F)
+    pub fn wait_until<F>(&self, condition: F, cpu_id: usize)
     where
         F: Fn() -> bool,
     {
         loop {
-            let mut rq = RUN_QUEUE.lock();
+            let mut rq = RUN_QUEUE[cpu_id].lock();
             if condition() {
                 break;
             }
@@ -64,7 +64,7 @@ impl WaitQueue {
         self.cancel_events(crate::current());
     }
 
-    pub fn wait_timeout(&self, dur: Duration) -> bool {
+    pub fn wait_timeout(&self, dur: Duration, cpu_id: usize) -> bool {
         let curr = crate::current();
         let deadline = current_time() + dur;
         debug!(
@@ -74,7 +74,7 @@ impl WaitQueue {
         );
         crate::timers::set_alarm_wakeup(deadline, curr.clone());
 
-        RUN_QUEUE.lock().block_current(|task| {
+        RUN_QUEUE[cpu_id].lock().block_current(|task| {
             task.set_in_wait_queue(true);
             self.queue.lock().push_back(task)
         });
@@ -83,7 +83,7 @@ impl WaitQueue {
         timeout
     }
 
-    pub fn wait_timeout_until<F>(&self, dur: Duration, condition: F) -> bool
+    pub fn wait_timeout_until<F>(&self, dur: Duration, condition: F, cpu_id: usize) -> bool
     where
         F: Fn() -> bool,
     {
@@ -98,7 +98,7 @@ impl WaitQueue {
 
         let mut timeout = true;
         while current_time() < deadline {
-            let mut rq = RUN_QUEUE.lock();
+            let mut rq = RUN_QUEUE[cpu_id].lock();
             if condition() {
                 timeout = false;
                 break;
@@ -112,8 +112,8 @@ impl WaitQueue {
         timeout
     }
 
-    pub fn notify_one(&self, resched: bool) -> bool {
-        let mut rq = RUN_QUEUE.lock();
+    pub fn notify_one(&self, resched: bool, cpu_id: usize) -> bool {
+        let mut rq = RUN_QUEUE[cpu_id].lock();
         if !self.queue.lock().is_empty() {
             self.notify_one_locked(resched, &mut rq)
         } else {
@@ -121,9 +121,9 @@ impl WaitQueue {
         }
     }
 
-    pub fn notify_all(&self, resched: bool) {
+    pub fn notify_all(&self, resched: bool, cpu_id: usize) {
         loop {
-            let mut rq = RUN_QUEUE.lock();
+            let mut rq = RUN_QUEUE[cpu_id].lock();
             if let Some(task) = self.queue.lock().pop_front() {
                 task.set_in_wait_queue(false);
                 rq.unblock_task(task, resched);
@@ -134,8 +134,8 @@ impl WaitQueue {
         }
     }
 
-    pub fn notify_task(&mut self, resched: bool, task: &AxTaskRef) -> bool {
-        let mut rq = RUN_QUEUE.lock();
+    pub fn notify_task(&mut self, resched: bool, task: &AxTaskRef, cpu_id: usize) -> bool {
+        let mut rq = RUN_QUEUE[cpu_id].lock();
         let mut wq = self.queue.lock();
         if let Some(index) = wq.iter().position(|t| Arc::ptr_eq(t, task)) {
             task.set_in_wait_queue(false);

@@ -106,54 +106,54 @@ pub fn init_scheduler_secondary() {
 }
 
 /// Handle periodic timer ticks for task manager, e.g. advance scheduler, update timer.
-pub fn on_timer_tick() {
+pub fn on_timer_tick(cpu_id: usize) {
     self::timers::check_events();
-    RUN_QUEUE.lock().scheduler_timer_tick();
+    RUN_QUEUE[cpu_id].lock().scheduler_timer_tick();
 }
 
 cfg_if::cfg_if! {
 if #[cfg(feature = "sched_cfs")] {
-    pub fn spawn<F>(f: F, _nice: isize)
+    pub fn spawn<F>(f: F, _nice: isize, cpu_id: usize)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, _nice);
-        RUN_QUEUE.lock().add_task(task);
+        RUN_QUEUE[cpu_id].lock().add_task(task);
     }
 } else if #[cfg(feature = "sched_rms")] {
-    pub fn spawn<F>(f: F, runtime: usize, period: usize)
+    pub fn spawn<F>(f: F, runtime: usize, period: usize, cpu_id: usize)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, runtime, period);
-        RUN_QUEUE.lock().add_task(task);
+        RUN_QUEUE[cpu_id].lock().add_task(task);
     }
 } else {
-    pub fn spawn<F>(f: F)
+    pub fn spawn<F>(f: F, cpu_id: usize)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE);
-        RUN_QUEUE.lock().add_task(task);
+        RUN_QUEUE[cpu_id].lock().add_task(task);
     }
 }
 }
 
-pub fn yield_now() {
-    RUN_QUEUE.lock().yield_current();
+pub fn yield_now(cpu_id: usize) {
+    RUN_QUEUE[cpu_id].lock().yield_current();
 }
 
-pub fn sleep(dur: core::time::Duration) {
+pub fn sleep(dur: core::time::Duration, cpu_id: usize) {
     let deadline = axhal::time::current_time() + dur;
-    RUN_QUEUE.lock().sleep_until(deadline);
+    RUN_QUEUE[cpu_id].lock().sleep_until(deadline);
 }
 
-pub fn sleep_until(deadline: axhal::time::TimeValue) {
-    RUN_QUEUE.lock().sleep_until(deadline);
+pub fn sleep_until(deadline: axhal::time::TimeValue, cpu_id: usize) {
+    RUN_QUEUE[cpu_id].lock().sleep_until(deadline);
 }
 
-pub fn exit(exit_code: i32) -> ! {
-    RUN_QUEUE.lock().exit_current(exit_code)
+pub fn exit(exit_code: i32, cpu_id: usize) -> ! {
+    RUN_QUEUE[cpu_id].lock().exit_current(exit_code)
 }
 
 } else { // if #[cfg(feature = "multitask")]

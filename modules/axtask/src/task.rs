@@ -383,9 +383,9 @@ impl Deref for CurrentTask {
     }
 }
 
-extern "C" fn task_entry() -> ! {
+extern "C" fn task_entry(cpu_id: usize) -> ! {
     // release the lock that was implicitly held across the reschedule
-    unsafe { crate::RUN_QUEUE.force_unlock() };
+    unsafe { crate::RUN_QUEUE[cpu_id].force_unlock() };
     axhal::arch::enable_irqs();
     let task = crate::current();
     if let Some(entry) = task.entry {
