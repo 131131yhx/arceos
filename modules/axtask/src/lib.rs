@@ -23,6 +23,36 @@ impl kernel_guard::KernelGuardIf for KernelGuardIfImpl {
     }
 }
 
+struct LogTaskImpl;
+
+
+
+#[cfg(not(feature = "std"))]
+#[def_interface]
+pub trait LogMyTime {
+    /// get current time
+    fn current_cpu_id() -> Option<usize>;
+}
+
+#[crate_interface::impl_interface]
+impl LogMyTime for LogTaskImpl {
+    fn current_cpu_id() -> Option<usize> {
+        #[cfg(feature = "smp")]
+        if is_init_ok() {
+            Some(axhal::cpu::this_cpu_id())
+        } else {
+            None
+        }
+        #[cfg(not(feature = "smp"))]
+        Some(0)
+    }
+}
+
+use crate_interface::{call_interface, def_interface};
+pub fn get_current_cpu_id() -> usize {
+    call_interface!(LogMyTime::current_cpu_id).unwrap()
+}
+
 cfg_if::cfg_if! {
 if #[cfg(feature = "multitask")] {
 
@@ -43,6 +73,7 @@ use self::task::{CurrentTask, TaskInner};
 
 pub use self::task::TaskId;
 pub use self::wait_queue::WaitQueue;
+
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "sched_fifo")] {
@@ -71,6 +102,10 @@ cfg_if::cfg_if! {
         type Scheduler = scheduler::RMScheduler<TaskInner>;
     }
 }
+
+const SMP : usize = axconfig::SMP;
+type MTask = load_balance_manager::NaiveTask<AxTask, TaskInner>;
+type Manager = load_balance_manager::NaiveManager<AxTask, TaskInner, Scheduler, SMP>;
 
 type AxTaskRef = Arc<AxTask>;
 
@@ -106,54 +141,57 @@ pub fn init_scheduler_secondary() {
 }
 
 /// Handle periodic timer ticks for task manager, e.g. advance scheduler, update timer.
-pub fn on_timer_tick(cpu_id: usize) {
+pub fn on_timer_tick() {
     self::timers::check_events();
-    RUN_QUEUE[cpu_id].lock().scheduler_timer_tick();
+    RUN_QUEUE[get_current_cpu_id()].lock().scheduler_timer_tick();
 }
 
 cfg_if::cfg_if! {
+
 if #[cfg(feature = "sched_cfs")] {
-    pub fn spawn<F>(f: F, _nice: isize, cpu_id: usize)
+    pub fn spawn<F>(f: F, _nice: isize)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, _nice);
-        RUN_QUEUE[cpu_id].lock().add_task(task);
+        RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }
 } else if #[cfg(feature = "sched_rms")] {
-    pub fn spawn<F>(f: F, runtime: usize, period: usize, cpu_id: usize)
+    pub fn spawn<F>(f: F, runtime: usize, period: usize)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, runtime, period);
-        RUN_QUEUE[cpu_id].lock().add_task(task);
+        RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }
 } else {
-    pub fn spawn<F>(f: F, cpu_id: usize)
+    pub fn spawn<F>(f: F)
     where
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE);
-        RUN_QUEUE[cpu_id].lock().add_task(task);
+        RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }
 }
 }
 
-pub fn yield_now(cpu_id: usize) {
-    RUN_QUEUE[cpu_id].lock().yield_current();
+
+
+pub fn yield_now() {
+    RUN_QUEUE[get_current_cpu_id()].lock().yield_current();
 }
 
-pub fn sleep(dur: core::time::Duration, cpu_id: usize) {
+pub fn sleep(dur: core::time::Duration) {
     let deadline = axhal::time::current_time() + dur;
-    RUN_QUEUE[cpu_id].lock().sleep_until(deadline);
+    RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
-pub fn sleep_until(deadline: axhal::time::TimeValue, cpu_id: usize) {
-    RUN_QUEUE[cpu_id].lock().sleep_until(deadline);
+pub fn sleep_until(deadline: axhal::time::TimeValue) {
+    RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
-pub fn exit(exit_code: i32, cpu_id: usize) -> ! {
-    RUN_QUEUE[cpu_id].lock().exit_current(exit_code)
+pub fn exit(exit_code: i32) -> ! {
+    RUN_QUEUE[get_current_cpu_id()].lock().exit_current(exit_code)
 }
 
 } else { // if #[cfg(feature = "multitask")]

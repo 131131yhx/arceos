@@ -143,13 +143,14 @@ impl<T> BaseScheduler for CFScheduler<T> {
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: Self::SchedItem) {
+    fn add_task(&mut self, task: &Self::SchedItem) {
+        let mytask = task.clone();
         if !self.min_vruntime.is_some() {
             self.min_vruntime = Some(AtomicIsize::new(0 as isize));
         }
-        (*task).set_vruntime(self.min_vruntime.as_mut().unwrap().load(Ordering::Acquire));
-        (*task).set_id(self.id_pool.fetch_add(1, Ordering::Release));
-        self.ready_queue.insert(task, 0);
+            (*mytask).set_vruntime(self.min_vruntime.as_mut().unwrap().load(Ordering::Acquire));
+        (*mytask).set_id(self.id_pool.fetch_add(1, Ordering::Release));
+        self.ready_queue.insert(mytask, 0);
         if let Some((min_vruntime_task, _)) = self.ready_queue.first_key_value() {
             // TODO: None
             self.min_vruntime = Some(AtomicIsize::new(min_vruntime_task.get_vruntime() as isize));
@@ -180,10 +181,10 @@ impl<T> BaseScheduler for CFScheduler<T> {
         }
     }
 
-    fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
+    fn put_prev_task(&mut self, prev: &Self::SchedItem, _preempt: bool) {
         // TODO: 现在还不支持 preempt，现在还在研究内核是怎么写的
-        let vruntime = Arc::clone(&prev).get_vruntime();
-        self.ready_queue.insert(prev, vruntime);
+        let vruntime = Arc::clone(prev).get_vruntime();
+        self.ready_queue.insert(prev.clone(), vruntime);
     }
 
     fn task_tick(&mut self, _current: &Self::SchedItem) -> bool {

@@ -58,13 +58,13 @@ impl<T> BaseScheduler for RMScheduler<T> {
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: Self::SchedItem) {
+    fn add_task(&mut self, task: &Self::SchedItem) {
         let id = self.next_task_id.fetch_add(1, Ordering::Relaxed);
         let priority = TaskPriority {
             priority: 1 / task.period,
             id,
         };
-        self.ready_queue.insert(priority, task);
+        self.ready_queue.insert(priority, task.clone());
     }
 
     fn remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
@@ -89,14 +89,14 @@ impl<T> BaseScheduler for RMScheduler<T> {
         }
     }
 
-    fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
+    fn put_prev_task(&mut self, prev: &Self::SchedItem, _preempt: bool) {
         // 将任务放回队列
         let id = self.next_task_id.fetch_add(1, Ordering::Relaxed);
         let priority = TaskPriority {
             priority: 1 / prev.period,
             id,
         };
-        self.ready_queue.insert(priority, prev);
+        self.ready_queue.insert(priority, prev.clone());
     }
 
     fn task_tick(&mut self, _current: &Self::SchedItem) -> bool {
