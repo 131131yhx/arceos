@@ -362,7 +362,7 @@ impl CurrentTask {
     }
 
     pub(crate) fn ptr_eq(&self, other: &AxTaskRef) -> bool {
-        Arc::ptr_eq(&self.0, other)
+        Arc::ptr_eq(&self.0.inner(), other.inner())
     }
 
     pub(crate) unsafe fn init_current(init_task: AxTaskRef) {
