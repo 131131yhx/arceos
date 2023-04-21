@@ -56,7 +56,7 @@ impl<T> BaseScheduler for FifoScheduler<T> {
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: &Self::SchedItem) {
+    fn add_task(&mut self, task: Self::SchedItem) {
         self.ready_queue.push_back(task.clone());
     }
 
@@ -69,7 +69,7 @@ impl<T> BaseScheduler for FifoScheduler<T> {
         self.ready_queue.pop_front()
     }
 
-    fn put_prev_task(&mut self, prev: &Self::SchedItem, _preempt: bool) {
+    fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
         self.ready_queue.push_back(prev.clone());
     }
 

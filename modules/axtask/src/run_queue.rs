@@ -313,8 +313,8 @@ impl SimpleRunQueueOperations for AxRunQueue {
     fn simple_init(&mut self) {
         self.scheduler.init();
     }
-    fn simple_add_task(&mut self, task: &Self::SchedItem) {
-        self.scheduler.add_task(task);
+    fn simple_add_task(&mut self, task: Self::SchedItem) {
+        self.scheduler.add_task(task.clone());
     }
     fn simple_remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
         self.scheduler.remove_task(task)
@@ -322,8 +322,8 @@ impl SimpleRunQueueOperations for AxRunQueue {
     fn simple_pick_next_task(&mut self) -> Option<Self::SchedItem> {
         self.scheduler.pick_next_task()
     }
-    fn simple_put_prev_task(&mut self, prev: &Self::SchedItem, preempt: bool) {
-        self.scheduler.put_prev_task(prev, preempt);
+    fn simple_put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
+        self.scheduler.put_prev_task(prev.clone(), preempt);
     }
     fn simple_task_tick(&mut self, current: &Self::SchedItem) -> bool {
         self.scheduler.task_tick(current)

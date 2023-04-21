@@ -84,7 +84,7 @@ impl<T> BaseScheduler for CFScheduler<T> {
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: &Self::SchedItem) {
+    fn add_task(&mut self, task: Self::SchedItem) {
         if !self.min_vruntime.is_some() {
             self.min_vruntime = Some(AtomicIsize::new(0 as isize));
         }
@@ -117,7 +117,7 @@ impl<T> BaseScheduler for CFScheduler<T> {
         self.ready_queue.pop_front()
     }
 
-    fn put_prev_task(&mut self, prev: &Self::SchedItem, _preempt: bool) {
+    fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
         // TODO: 现在还不支持 preempt，现在还在研究内核是怎么写的
         self.ready_queue.push_back(prev.clone())
     }

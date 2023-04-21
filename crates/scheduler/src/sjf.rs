@@ -133,10 +133,9 @@ impl<T, const A: usize, const LOGB: usize> BaseScheduler for SJFScheduler<T, A, 
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: &Self::SchedItem) {
-        let mytask = task.clone();
-        (*mytask).set_id(self.id_pool.fetch_add(1, Ordering::Release));
-        self.ready_queue.insert(mytask, 0);
+    fn add_task(&mut self, task: Self::SchedItem) {
+        (*task).set_id(self.id_pool.fetch_add(1, Ordering::Release));
+        self.ready_queue.insert(task, 0);
     }
 
     fn remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
@@ -156,7 +155,7 @@ impl<T, const A: usize, const LOGB: usize> BaseScheduler for SJFScheduler<T, A, 
         }
     }
 
-    fn put_prev_task(&mut self, prev: &Self::SchedItem, _preempt: bool) {
+    fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
         // TODO: 现在还不支持 preempt，现在还在研究内核是怎么写的
         prev.update_expect_runtime();
         self.ready_queue.insert(prev.clone(), 0);

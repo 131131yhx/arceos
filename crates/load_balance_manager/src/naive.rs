@@ -68,7 +68,7 @@ impl<Task, T, const SMP: usize> BaseManager for NaiveManager<Task, T, SMP> {
 
     fn add_task(&mut self, cpu_id: usize, task: Self::SchedItem) {
         info!("qwq2");
-        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_add_task(&task.inner.clone())
+        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_add_task(task.inner.clone())
     }
 
     fn remove_task(&mut self, cpu_id: usize, task: &Self::SchedItem) -> Option<Self::SchedItem> {
@@ -97,7 +97,8 @@ impl<Task, T, const SMP: usize> BaseManager for NaiveManager<Task, T, SMP> {
 
     fn put_prev_task(&mut self, cpu_id: usize, prev: Self::SchedItem, _preempt: bool) {
         info!("qwq5 {}", Arc::strong_count(&prev.inner));
-        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_put_prev_task(&prev.inner.clone(), _preempt)
+        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_put_prev_task(prev.inner.clone(), _preempt);
+        info!("qwq55 {}", Arc::strong_count(&prev.inner));
     }
 
     fn task_tick(&mut self, cpu_id: usize, _current: &Self::SchedItem) -> bool {

@@ -16,10 +16,10 @@ pub trait SimpleRunQueueOperations {
     type SchedItem;
 
     fn simple_init(&mut self);
-    fn simple_add_task(&mut self, task: &Self::SchedItem);
+    fn simple_add_task(&mut self, task: Self::SchedItem);
     fn simple_remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem>;
     fn simple_pick_next_task(&mut self) -> Option<Self::SchedItem>;
-    fn simple_put_prev_task(&mut self, prev: &Self::SchedItem, preempt: bool);
+    fn simple_put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool);
     fn simple_task_tick(&mut self, current: &Self::SchedItem) -> bool;
 }
 

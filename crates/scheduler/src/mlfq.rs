@@ -91,9 +91,8 @@ impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> BaseSc
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: &Self::SchedItem) {
-        let mytask = task.clone();
-        self.ready_queue[mytask.get_prio() as usize].push_back(mytask);
+    fn add_task(&mut self, task: Self::SchedItem) {
+        self.ready_queue[task.get_prio() as usize].push_back(task);
     }
 
     fn remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
@@ -113,7 +112,7 @@ impl<T, const QNUM: usize, const BASETICK: usize, const RESETTICK: usize> BaseSc
         return None;
     }
 
-    fn put_prev_task(&mut self, prev: &Self::SchedItem, preempt: bool) {
+    fn put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
         // 这个算法只支持部分的 preempt：处于同优先级内可以给它安排在最前面的，但如果优先级不一样就不太行了。这里的 preempt 沿用了 RR 的写法
         if Arc::clone(&prev).get_remain() <= 0 {
             //info!("{}", Arc::clone(&prev).get_prio());

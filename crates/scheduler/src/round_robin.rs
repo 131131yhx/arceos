@@ -54,7 +54,7 @@ impl<T, const S: usize> BaseScheduler for RRScheduler<T, S> {
 
     fn init(&mut self) {}
 
-    fn add_task(&mut self, task: &Self::SchedItem) {
+    fn add_task(&mut self, task: Self::SchedItem) {
         self.ready_queue.push_back(task.clone());
     }
 
@@ -70,7 +70,7 @@ impl<T, const S: usize> BaseScheduler for RRScheduler<T, S> {
         self.ready_queue.pop_front()
     }
 
-    fn put_prev_task(&mut self, prev: &Self::SchedItem, preempt: bool) {
+    fn put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
         if prev.time_slice() > 0 && preempt {
             self.ready_queue.push_front(prev.clone())
         } else {
