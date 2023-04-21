@@ -50,6 +50,9 @@ fn main() {
             .collect::<Vec<_>>(),
     );
     let expect: u64 = vec.iter().map(load).sum();
+    loop {
+        
+    }
 
     let timeout = MAIN_WQ.wait_timeout(Duration::from_millis(500));
     assert!(timeout);

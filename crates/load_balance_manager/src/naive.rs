@@ -71,7 +71,7 @@ impl<Task, T, const SMP: usize> BaseManager for NaiveManager<Task, T, SMP> {
     fn remove_task(&mut self, cpu_id: usize, task: &Self::SchedItem) -> Option<Self::SchedItem> {
         if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_remove_task(&task.inner) {
             Some(Self::SchedItem::new(NaiveTask {
-                inner,
+                inner: inner.clone(),
                 _marker: None,
             }))
         } else {
@@ -82,7 +82,7 @@ impl<Task, T, const SMP: usize> BaseManager for NaiveManager<Task, T, SMP> {
     fn pick_next_task(&mut self, cpu_id: usize) -> Option<Self::SchedItem> {
         if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_pick_next_task() {
             Some(Self::SchedItem::new(NaiveTask {
-                inner,
+                inner: inner.clone(),
                 _marker: None,
             }))
         } else {
