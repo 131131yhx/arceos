@@ -6,74 +6,70 @@ use alloc::sync::Arc;
 use core::ops::Deref;
 use crate::BaseManager;
 use scheduler::BaseScheduler;
+use crate::SimpleRunQueueOperations;
 use alloc::vec::Vec;
 use spinlock::SpinNoIrq; // TODO: 不确定！！！
 //use std::marker::PhantomData;
 
 pub struct NaiveTask<Task, T> {
-    inner: Task,
+    inner: Arc<Task>,
     _marker: Option<T>,
 }
 
 
 impl<Task, T> NaiveTask<Task, T> {
-    pub const fn new(inner: Task) -> Self {
+    pub const fn new(inner: Arc<Task>) -> Self {
         Self {
             inner,
             _marker: None,
         }
     }
 
-    pub const fn inner(&self) -> &Task {
+    pub const fn inner(&self) -> &Arc<Task> {
         &self.inner
     }
 }
 
 impl<Task, T> const Deref for NaiveTask<Task, T> {
-    type Target = Task;
+    type Target = Arc<Task>;
     fn deref(&self) -> &Self::Target {
         &self.inner
     }
 }
 
-pub struct NaiveManager<T, Task, Scheduler, const SMP: usize> {
-    scheduler_collection: Vec<Option<Arc<SpinNoIrq<Scheduler>>>>,
+pub struct NaiveManager<Task, T, const SMP: usize> {
+    scheduler_collection: Vec<Option<Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<Task>> + Send + 'static>>>>,
     _markerT: Option<T>,
-    _markerTask: Option<Task>,
 }
 
-impl<Task, T, Scheduler: BaseScheduler, const SMP: usize> NaiveManager<Task, T, Scheduler, SMP> {
+impl<Task, T, const SMP: usize> NaiveManager<Task, T, SMP> {
     pub fn new() -> Self {
-        let mut tmp_collection: Vec<Option<Arc<SpinNoIrq<Scheduler>>>> = Vec::new();
+        let mut tmp_collection: Vec<Option<Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<Task>> + Send + 'static>>>> = Vec::new();
         for _i in 0..SMP {
             tmp_collection.push(None);
         }
         Self {
             scheduler_collection: tmp_collection,
             _markerT: None,
-            _markerTask: None,
         }
     }
 }
 
-impl<Task, T, Scheduler: BaseScheduler, const SMP: usize> BaseManager for NaiveManager<Task, T, Scheduler, SMP> 
-where
-    Scheduler: BaseScheduler<SchedItem = Task>,
-{
+impl<Task, T, const SMP: usize> BaseManager for NaiveManager<Task, T, SMP> {
     type SchedItem = Arc<NaiveTask<Task, T>>;
-    type SchedulerItem = Arc<SpinNoIrq<Scheduler>>;
-    fn init(&mut self, cpu_id: usize, queue: Self::SchedulerItem) {
-        self.scheduler_collection[cpu_id] = Some(queue.clone());
-        let mut scheduler = queue.lock();
-        scheduler.init();
+    type InnerSchedItem = Arc<Task>;
+    fn init(&mut self, cpu_id: usize, queue_ref: Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Self::InnerSchedItem> + Send + 'static>>) {
+        self.scheduler_collection[cpu_id] = Some(queue_ref.clone());
+        let mut scheduler = queue_ref.lock();
+        queue_ref.lock().simple_init();
     }
 
     fn add_task(&mut self, cpu_id: usize, task: Self::SchedItem) {
-        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().add_task(&task.inner)
+        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_add_task(&task.inner)
     }
 
     fn remove_task(&mut self, cpu_id: usize, task: &Self::SchedItem) -> Option<Self::SchedItem> {
-        if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().remove_task(&task.inner) {
+        if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_remove_task(&task.inner) {
             Some(Self::SchedItem::new(NaiveTask {
                 inner,
                 _marker: None,
@@ -84,7 +80,7 @@ where
     }
 
     fn pick_next_task(&mut self, cpu_id: usize) -> Option<Self::SchedItem> {
-        if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().pick_next_task() {
+        if let Some(inner) = self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_pick_next_task() {
             Some(Self::SchedItem::new(NaiveTask {
                 inner,
                 _marker: None,
@@ -95,10 +91,10 @@ where
     }
 
     fn put_prev_task(&mut self, cpu_id: usize, prev: Self::SchedItem, _preempt: bool) {
-        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().put_prev_task(&prev.inner, _preempt)
+        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_put_prev_task(&prev.inner, _preempt)
     }
 
     fn task_tick(&mut self, cpu_id: usize, _current: &Self::SchedItem) -> bool {
-        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().task_tick(_current)
+        self.scheduler_collection[cpu_id].as_ref().unwrap().lock().simple_task_tick(_current)
     }
 }

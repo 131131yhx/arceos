@@ -3,6 +3,7 @@ use core::ops::Deref;
 use core::sync::atomic::{AtomicBool, AtomicU64, AtomicU8, Ordering};
 use core::{alloc::Layout, cell::UnsafeCell, fmt, ptr::NonNull};
 use crate::get_current_cpu_id;
+use crate::AxTaskInner;
 
 #[cfg(feature = "preempt")]
 use core::sync::atomic::AtomicUsize;
@@ -121,7 +122,7 @@ if #[cfg(feature = "sched_cfs")] {
         if name == "idle" {
             t.is_idle = true;
         }
-        Arc::new(AxTask::new(t, _nice as isize))
+        Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, _nice as isize))))
     }
 } else if #[cfg(feature = "sched_rms")] {
     pub(crate) fn new<F>(entry: F, name: &'static str, stack_size: usize, runtime: usize, period: usize) -> AxTaskRef
@@ -137,7 +138,7 @@ if #[cfg(feature = "sched_cfs")] {
         if name == "idle" {
             t.is_idle = true;
         }
-        Arc::new(AxTask::new(t, runtime, period))
+        Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, runtime, period))))
     }
 } else {
     pub(crate) fn new<F>(entry: F, name: &'static str, stack_size: usize) -> AxTaskRef
@@ -153,7 +154,7 @@ if #[cfg(feature = "sched_cfs")] {
         if name == "idle" {
             t.is_idle = true;
         }
-        Arc::new(AxTask::new(t, 0 as isize))
+        Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, 0 as isize))))
     }
 }
 }
@@ -167,7 +168,7 @@ cfg_if::cfg_if! {
             if name == "idle" {
                 t.is_idle = true;
             }
-            Arc::new(AxTask::new(t, 0))
+            Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, 0))))
         }
     } else if #[cfg(feature = "sched_rms")] {
         pub(crate) fn new_init(name: &'static str) -> AxTaskRef {
@@ -177,7 +178,7 @@ cfg_if::cfg_if! {
             if name == "idle" {
                 t.is_idle = true;
             }
-            Arc::new(AxTask::new(t, 0, 1))
+            Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, 0, 1))))
         }
     } else {
         pub(crate) fn new_init(name: &'static str) -> AxTaskRef {
@@ -187,7 +188,7 @@ cfg_if::cfg_if! {
             if name == "idle" {
                 t.is_idle = true;
             }
-            Arc::new(AxTask::new(t, 0))
+            Arc::new(AxTask::new(Arc::new(AxTaskInner::new(t, 0))))
         }
     }
     }
@@ -280,7 +281,7 @@ cfg_if::cfg_if! {
     fn current_check_preempt_pending() {
         let curr = crate::current();
         if curr.need_resched.load(Ordering::Acquire) && curr.can_preempt(0) {
-            let mut rq = crate::RUN_QUEUE[get_current_cpu_id()].lock();
+            let mut rq = crate::RUN_QUEUE[get_current_cpu_id()];
             if curr.need_resched.load(Ordering::Acquire) {
                 rq.resched();
             }
@@ -386,7 +387,7 @@ impl Deref for CurrentTask {
 
 extern "C" fn task_entry() -> ! {
     // release the lock that was implicitly held across the reschedule
-    unsafe { crate::RUN_QUEUE[get_current_cpu_id()].force_unlock() };
+    //unsafe { crate::RUN_QUEUE[get_current_cpu_id()].force_unlock() };
     axhal::arch::enable_irqs();
     let task = crate::current();
     if let Some(entry) = task.entry {

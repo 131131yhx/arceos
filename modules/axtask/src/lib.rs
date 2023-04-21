@@ -77,35 +77,35 @@ pub use self::wait_queue::WaitQueue;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "sched_fifo")] {
-        type AxTask = scheduler::FifoTask<TaskInner>;
+        type AxTaskInner = scheduler::FifoTask<TaskInner>;
         type Scheduler = scheduler::FifoScheduler<TaskInner>;
     } else if #[cfg(feature = "sched_rr")] {
         const MAX_TIME_SLICE: usize = 5;
-        type AxTask = scheduler::RRTask<TaskInner, MAX_TIME_SLICE>;
+        type AxTaskInner = scheduler::RRTask<TaskInner, MAX_TIME_SLICE>;
         type Scheduler = scheduler::RRScheduler<TaskInner, MAX_TIME_SLICE>;
     } else if #[cfg(feature = "sched_cfs")] {
-        type AxTask = scheduler::CFTask<TaskInner>;
+        type AxTaskInner = scheduler::CFTask<TaskInner>;
         type Scheduler = scheduler::CFScheduler<TaskInner>;
     } else if #[cfg(feature = "sched_sjf")] {
         const alpha_a: usize = 1;
         const alpha_log_b: usize = 4; // 1/16
-        type AxTask = scheduler::SJFTask<TaskInner, alpha_a, alpha_log_b>;
+        type AxTaskInner = scheduler::SJFTask<TaskInner, alpha_a, alpha_log_b>;
         type Scheduler = scheduler::SJFScheduler<TaskInner, alpha_a, alpha_log_b>;
     } else if #[cfg(feature = "sched_mlfq")] {
         const QNUM: usize = 8;
         const BASTTICK: usize = 1;
         const RESETTICK: usize = 100_000;
-        type AxTask = scheduler::MLFQTask<TaskInner, QNUM, BASTTICK, RESETTICK>;
+        type AxTaskInner = scheduler::MLFQTask<TaskInner, QNUM, BASTTICK, RESETTICK>;
         type Scheduler = scheduler::MLFQScheduler<TaskInner, QNUM, BASTTICK, RESETTICK>;
     } else if #[cfg(feature = "sched_rms")] {
-        type AxTask = scheduler::RMSTask<TaskInner>;
+        type AxTaskInner = scheduler::RMSTask<TaskInner>;
         type Scheduler = scheduler::RMScheduler<TaskInner>;
     }
 }
 
 const SMP : usize = axconfig::SMP;
-type MTask = load_balance_manager::NaiveTask<AxTask, TaskInner>;
-type Manager = load_balance_manager::NaiveManager<AxTask, TaskInner, Scheduler, SMP>;
+type AxTask = load_balance_manager::NaiveTask<AxTaskInner, TaskInner>;
+type Manager = load_balance_manager::NaiveManager<AxTaskInner, TaskInner, SMP>;
 
 type AxTaskRef = Arc<AxTask>;
 
