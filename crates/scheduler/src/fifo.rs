@@ -70,7 +70,9 @@ impl<T> BaseScheduler for FifoScheduler<T> {
     }
 
     fn put_prev_task(&mut self, prev: Self::SchedItem, _preempt: bool) {
-        self.ready_queue.push_back(prev.clone());
+        info!("qwq7 {}", Arc::strong_count(&prev));
+        self.ready_queue.push_back(Arc::clone(&prev));
+        info!("qwq77 {}", Arc::strong_count(&prev));
     }
 
     fn task_tick(&mut self, _current: &Self::SchedItem) -> bool {

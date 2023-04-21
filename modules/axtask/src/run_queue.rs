@@ -324,6 +324,7 @@ impl SimpleRunQueueOperations for AxRunQueue {
     }
     fn simple_put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
         self.scheduler.put_prev_task(prev.clone(), preempt);
+        info!("qwq88 {}", Arc::strong_count(&prev));
     }
     fn simple_task_tick(&mut self, current: &Self::SchedItem) -> bool {
         self.scheduler.task_tick(current)
