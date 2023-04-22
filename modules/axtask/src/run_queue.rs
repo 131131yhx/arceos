@@ -79,6 +79,8 @@ cfg_if::cfg_if! {
     pub fn add_task(&mut self, task: AxTaskRef) {
         debug!("task spawn: {}", task.id_name());
         assert!(task.is_ready());
+
+        info!("asdjasjklljkdsajkl");
         RUN_MANAGER.lock().add_task(get_current_cpu_id(), task);
     }
 
@@ -160,7 +162,10 @@ cfg_if::cfg_if! {
         debug!("task unblock: {}", task.id_name());
         if task.is_blocked() {
             task.set_state(TaskState::Ready);
-            RUN_MANAGER.lock().add_task(get_current_cpu_id(), task);
+            
+        info!("asdjasjklljkdsajkl2");
+        RUN_MANAGER.lock().add_task(get_current_cpu_id(), task);
+        info!("asdjasjklljkdsajkl2 ok");
             if resched {
                 #[cfg(feature = "preempt")]
                 crate::current().set_preempt_pending(true);
@@ -229,8 +234,11 @@ impl AxRunQueue {
             assert!(Arc::strong_count(prev_task.as_task_ref()) > 1);
             assert!(Arc::strong_count(&next_task) >= 1);
 
+            info!("sjdalsjflask1 {}", get_current_cpu_id());
             CurrentTask::set_current(prev_task, next_task);
+            info!("sjdalsjflask2 {}", get_current_cpu_id());
             (*prev_ctx_ptr).switch_to(&*next_ctx_ptr);
+            info!("sjdalsjflask3 {}", get_current_cpu_id());
             
         }
     }
@@ -267,7 +275,7 @@ if #[cfg(feature = "sched_cfs")] {
         /*loop {
             
         }*/
-    
+        
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     
@@ -303,7 +311,7 @@ if #[cfg(feature = "sched_cfs")] {
         /*loop {
             
         }*/
-    
+        
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     

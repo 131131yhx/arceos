@@ -34,15 +34,24 @@ pub trait LogMyTime {
     fn current_cpu_id() -> Option<usize>;
 }
 
+use core::sync::atomic::{AtomicUsize, Ordering};
+pub static INITED_CPUS: AtomicUsize = AtomicUsize::new(0);
+
+pub fn is_init_ok() -> bool {
+    INITED_CPUS.load(Ordering::Acquire) == axconfig::SMP
+}
+
 #[crate_interface::impl_interface]
 impl LogMyTime for LogTaskImpl {
     fn current_cpu_id() -> Option<usize> {
-        #[cfg(feature = "smp")]
-        if is_init_ok() {
+        #[cfg(feature = "smp")] {
+            // TODO: 这逻辑啥玩意啊
             Some(axhal::cpu::this_cpu_id())
-        } else {
-            None
         }
+        //if is_init_ok() {
+        //} else {
+        //    None
+        //}
         #[cfg(not(feature = "smp"))]
         Some(0)
     }
@@ -104,7 +113,13 @@ cfg_if::cfg_if! {
 }
 
 const SMP : usize = axconfig::SMP;
-type Manager = load_balance_manager::NaiveManager<AxTask, SMP>;
+//cfg_if::cfg_if! {
+    //if #[cfg(feature = "manager_work_stealing")] {
+    //    type Manager = load_balance_manager::WorkStealingManager<AxTask, SMP>;
+    //} else {
+        type Manager = load_balance_manager::NaiveManager<AxTask, SMP>;
+    //}
+//}
 
 type AxTaskRef = Arc<AxTask>;
 
@@ -132,6 +147,12 @@ pub fn init_scheduler() {
         info!("  use short job first scheduler.");
     } else if cfg!(feature = "sched_mlfq") {
         info!("  use Multi-Level Feedback Queue scheduler.");
+    }
+    
+    if cfg!(feature = "manager_work_stealing") {
+        info!("  use WorkStealingManager");
+    } else {
+        info!("  use NaiveManager");
     }
 }
 
@@ -169,7 +190,7 @@ if #[cfg(feature = "sched_cfs")] {
         F: FnOnce() + Send + 'static,
     {
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE);
-        RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
+    RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }
 }
 }
@@ -177,6 +198,7 @@ if #[cfg(feature = "sched_cfs")] {
 
 
 pub fn yield_now() {
+    //info!("yield from cpu {}", get_current_cpu_id());
     RUN_QUEUE[get_current_cpu_id()].lock().yield_current();
 }
 

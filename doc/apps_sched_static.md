@@ -15,7 +15,7 @@ make A=apps/task/sched-static LOG=info SMP=3 run
 
 # RESULT
 ```
-make A=apps/task/sched-realtime LOG=info APP_FEATURES=sched_mlfq SMP=4 run
+make A=apps/task/sched-static LOG=info SMP=1 run
 ...
 part 0: TaskId(6) [0, 1000)
 runtime = 1, sleeptime = 2

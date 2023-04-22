@@ -19,6 +19,7 @@ impl TimerEvent for TaskWakeupEvent {
         let mut rq = RUN_QUEUE[get_current_cpu_id()].lock();
         self.0.set_in_timer_list(false);
         rq.unblock_task(self.0, true);
+        info!("timerevent ok {}", get_current_cpu_id());
     }
 }
 

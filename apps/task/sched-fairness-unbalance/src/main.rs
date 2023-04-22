@@ -13,8 +13,7 @@ use libax::sync::{Mutex, WaitQueue};
 use libax::{rand, task};
 use libax::task::{sleep, yield_now};
 
-const NUM_DATA: usize = 200;
-const NUM_TASKS: usize = 200;
+const NUM_TASKS: usize = 20;
 
 static FINISHED_TASKS: AtomicUsize = AtomicUsize::new(0);
 
@@ -32,9 +31,8 @@ fn barrier() {
 }
 
 fn load(n: &u64) -> u64 {
-    // 一个高耗时负载，运行 1000+n 次
     let mut sum : u64 = *n;
-    for i in 0..(10000 + (*n / (NUM_DATA / NUM_TASKS) as u64 * 20000)) {
+    for i in 0..(1 << 25) {
         sum = sum + ((i ^ (i + *n)) >> 10);
     }
     yield_now();
@@ -43,22 +41,16 @@ fn load(n: &u64) -> u64 {
 
 #[no_mangle]
 fn main() {
-    let vec = Arc::new(
-        (0..NUM_DATA)
-            .map(|idx| idx as u64)
-            .collect::<Vec<_>>(),
-    );
     //let expect: u64 = vec.iter().map(load).sum();
 
     let timeout = MAIN_WQ.wait_timeout(Duration::from_millis(500));
     assert!(timeout);
 
     for i in 0..NUM_TASKS {
-        let vec = vec.clone();
         task::spawn(move || {
             let start_time = libax::time::Instant::now();
-            let left = i * (NUM_DATA / NUM_TASKS);
-            let right = (left + (NUM_DATA / NUM_TASKS)).min(NUM_DATA);
+            let left = 0;
+            let right = ((i % 4) * 4 + 1) as u64;
             println!(
                 "part {}: {:?} [{}, {})",
                 i,
@@ -68,8 +60,8 @@ fn main() {
             );
 
             for j in left..right {
-                RESULTS.lock()[i] += load(&vec[j]);
-                CALCS.lock()[i] += 1;
+                let tmp = rand::rand_u32() as u64;
+                RESULTS.lock()[i] += load(&tmp);
             }
             LEAVE_TIME.lock()[i] = start_time.elapsed().as_millis() as u64;
 
@@ -83,7 +75,7 @@ fn main() {
         });
     }
 
-    let timeout = MAIN_WQ.wait_timeout(Duration::from_millis(5000));
+    let timeout = MAIN_WQ.wait_timeout(Duration::from_millis(12000));
     let binding = LEAVE_TIME.lock();
     for i in 0..NUM_TASKS {
         println!("leave time id {} = {}ms", i, binding[i]);

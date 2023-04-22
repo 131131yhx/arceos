@@ -3,9 +3,11 @@
 #![feature(const_mut_refs)]
 
 mod naive;
+mod work_stealing;
 extern crate alloc;
 
 pub use naive::NaiveManager;
+pub use work_stealing::WorkStealingManager;
 use scheduler::BaseScheduler;
 use alloc::sync::Arc;
 use spinlock::SpinNoIrq; // TODO: 不确定！！！

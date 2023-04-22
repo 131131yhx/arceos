@@ -73,9 +73,11 @@ impl axlog::LogIf for LogIfImpl {
 
 use core::sync::atomic::{AtomicUsize, Ordering};
 
-static INITED_CPUS: AtomicUsize = AtomicUsize::new(0);
+use axtask::INITED_CPUS;
 
-fn is_init_ok() -> bool {
+//static INITED_CPUS: AtomicUsize = AtomicUsize::new(0);
+
+pub fn is_init_ok() -> bool {
     INITED_CPUS.load(Ordering::Acquire) == axconfig::SMP
 }
 

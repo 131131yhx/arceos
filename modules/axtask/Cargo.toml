@@ -7,18 +7,20 @@ authors = ["Yuekai Jia <equation618@gmail.com>"]
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [features]
+smp = ["axhal/smp", "spinlock?/smp"]
 multitask = [ # without the feature, can still use the empty yield_now() and exit()
     "dep:axconfig", "dep:percpu", "dep:spinlock", "dep:lazy_init",
     "dep:memory_addr", "dep:scheduler", "dep:timer_list", "dep:load_balance_manager"
 ]
 preempt = ["percpu?/preempt"]
 
-sched_fifo = ["multitask"]
+sched_fifo = ["multitask", "smp"]
 sched_rr = ["multitask", "preempt"]
 sched_cfs = ["multitask"]
 sched_sjf = ["multitask"]
 sched_mlfq = ["multitask"]
 sched_rms = ["multitask"]
+
 default = ["sched_mlfq"]
 
 [dependencies]
@@ -26,8 +28,8 @@ array-init = "0.1"
 cfg-if = "1.0"
 log = "0.4"
 lazy_static = { version = "1.4.0", features = ["spin_no_std"] }
-axhal = { path = "../axhal" }
-axlog = { path = "../axlog" }
+axhal = { path = "../axhal", features = ["smp"]}
+axlog = { path = "../axlog"}
 axconfig = { path = "../axconfig", optional = true }
 percpu = { path = "../../crates/percpu", optional = true }
 spinlock = { path = "../../crates/spinlock", optional = true }

@@ -23,6 +23,11 @@ sched_sjf = ["axtask/sched_sjf"]
 sched_mlfq = ["axtask/sched_mlfq"]
 sched_rms = ["axtask/sched_rms"]
 
+# load_balance_manager
+# loadbalance = ["axtask/loadbalance"]
+# manager_naive = ["axtask/manager_naive"]
+# manager_work_stealing = ["axtask/manager_work_stealing"]
+
 # Networking
 net = ["axruntime/net", "dep:axnet"]
 
