@@ -101,6 +101,13 @@ dependencies = [
 ]
 
 [[package]]
+name = "arceos-sched-test1-3-fairness-unbalance"
+version = "0.1.0"
+dependencies = [
+ "libax",
+]
+
+[[package]]
 name = "arceos-sched-test1-3-yield-speed"
 version = "0.1.0"
 dependencies = [
