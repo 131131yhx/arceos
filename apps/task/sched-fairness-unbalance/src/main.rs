@@ -40,7 +40,7 @@ fn load(n: &u64) -> u64 {
     yield_now();
     sum
 }
-
+ 
 #[no_mangle]
 fn main() {
     let vec = Arc::new(
