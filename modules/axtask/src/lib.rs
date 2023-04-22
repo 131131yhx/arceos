@@ -177,23 +177,19 @@ if #[cfg(feature = "sched_cfs")] {
 
 
 pub fn yield_now() {
-    info!("qpwoipoias");
     RUN_QUEUE[get_current_cpu_id()].lock().yield_current();
 }
 
 pub fn sleep(dur: core::time::Duration) {
-    info!("qpwoipoias1");
     let deadline = axhal::time::current_time() + dur;
     RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
 pub fn sleep_until(deadline: axhal::time::TimeValue) {
-    info!("qpwoipoias2");
     RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
 pub fn exit(exit_code: i32) -> ! {
-    info!("qpwoipoias3");
     RUN_QUEUE[get_current_cpu_id()].lock().exit_current(exit_code)
 }
 
@@ -221,7 +217,6 @@ pub fn sleep_until(deadline: axhal::time::TimeValue) {
 } // cfg_if::cfg_if!
 
 pub fn run_idle() -> ! {
-    info!("aoqpwoipeqipoeiqwop");
     loop {
         yield_now();
         debug!("idle task: waiting for IRQs...");

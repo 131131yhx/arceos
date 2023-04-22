@@ -83,7 +83,6 @@ cfg_if::cfg_if! {
     }
 
     pub fn scheduler_timer_tick(&mut self) {
-        info!("sakjdhaskjdsakj");
         let curr = crate::current();
         if !curr.is_idle() && RUN_MANAGER.lock().task_tick(get_current_cpu_id(), curr.as_task_ref()) {
             #[cfg(feature = "preempt")]

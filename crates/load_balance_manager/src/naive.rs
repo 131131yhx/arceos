@@ -35,30 +35,30 @@ impl<Task, const SMP: usize> BaseManager for NaiveManager<Task, SMP> {
     }
 
     fn add_task(&mut self, cpu_id: usize, task: Self::SchedItem) {
-        info!("qwq {}", cpu_id);
+        //info!("qwq {}", cpu_id);
         self.scheduler_collection[cpu_id].as_ref().unwrap().lock().add_task(task);
-        info!("qwq {} ok", cpu_id);
+        //info!("qwq {} ok", cpu_id);
     }
 
     fn remove_task(&mut self, cpu_id: usize, task: &Self::SchedItem) -> Option<Self::SchedItem> {
-        info!("qwq2 {}", cpu_id);
+        //info!("qwq2 {}", cpu_id);
         self.scheduler_collection[cpu_id].as_ref().unwrap().lock().remove_task(task)
     }
 
     fn pick_next_task(&mut self, cpu_id: usize) -> Option<Self::SchedItem> {
-        info!("qwq3 {}", cpu_id);
+       // info!("qwq3 {}", cpu_id);
         self.scheduler_collection[cpu_id].as_ref().unwrap().lock().pick_next_task()
     }
 
     fn put_prev_task(&mut self, cpu_id: usize, prev: Self::SchedItem, _preempt: bool) {
-        info!("qwq4 {}", cpu_id);
+        //info!("qwq4 {}", cpu_id);
         self.scheduler_collection[cpu_id].as_ref().unwrap().lock().put_prev_task(prev, _preempt);
     }
 
     fn task_tick(&mut self, cpu_id: usize, _current: &Self::SchedItem) -> bool {
-        info!("qwq5 {}", cpu_id);
+        //info!("qwq5 {}", cpu_id);
         self.scheduler_collection[cpu_id].as_ref().unwrap().lock().task_tick(_current);
-        info!("qwq5 ok {}", cpu_id);
+        //info!("qwq5 ok {}", cpu_id);
         false
     }
 }
