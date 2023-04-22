@@ -142,9 +142,7 @@ pub fn init_scheduler_secondary() {
 /// Handle periodic timer ticks for task manager, e.g. advance scheduler, update timer.
 pub fn on_timer_tick() {
     self::timers::check_events();
-    info!("qwqakjfkash {}", get_current_cpu_id());
     RUN_QUEUE[get_current_cpu_id()].lock().scheduler_timer_tick();
-    info!("qwqakjfkash ok");
 }
 
 cfg_if::cfg_if! {
@@ -162,7 +160,6 @@ if #[cfg(feature = "sched_cfs")] {
     where
         F: FnOnce() + Send + 'static,
     {
-        info!("qpoipoaispdasjz");
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, runtime, period);
         RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }

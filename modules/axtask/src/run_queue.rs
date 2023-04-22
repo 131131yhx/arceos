@@ -41,17 +41,15 @@ impl AxRunQueue {
     
 cfg_if::cfg_if! {
     if #[cfg(feature = "sched_cfs")] {
-    pub fn new(_nice: isize) -> Arc<SpinNoIrq<Self>> {
-        loop {
-            info!("qwq");
-        }
-        let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE, _nice);
-        let scheduler = Scheduler::new();
-        let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
-        RUN_MANAGER.lock().init(get_current_cpu_id(), tmp_as_dyn.clone());
-        RUN_MANAGER.lock().add_task(get_current_cpu_id(), gc_task);
-        tmp
+    pub fn new(_nice: isize, hartid: usize) -> Arc<SpinNoIrq<Self>> {
+            let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE, _nice);
+            let scheduler = Arc::new(SpinNoIrq::new(Scheduler::new()));
+            REAL_RUN_QUEUE[hartid].init_by(scheduler.clone());
+            let tmp = Arc::new(SpinNoIrq::new(Self { scheduler: scheduler.clone() })) ;
+            let tmp_as_dyn = scheduler.clone() as Arc<SpinNoIrq<dyn BaseScheduler<SchedItem = Arc<AxTask>> + Send + 'static>>;
+            RUN_MANAGER.lock().init(hartid, tmp_as_dyn.clone());
+            RUN_MANAGER.lock().add_task(hartid, gc_task);
+            tmp
     }
 } else if #[cfg(feature = "sched_rms")] {
     pub fn new(runtime: usize, period: usize, hartid: usize) -> Arc<SpinNoIrq<Self>> {
@@ -65,16 +63,14 @@ cfg_if::cfg_if! {
         tmp
     }
 } else {
-    pub fn new() -> Arc<SpinNoIrq<Self>> {
-        loop {
-            info!("qwq");
-        }
+    pub fn new(hartid: usize) -> Arc<SpinNoIrq<Self>> {
         let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE);
-        let scheduler = Scheduler::new();
-        let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
-        RUN_MANAGER.lock().init(get_current_cpu_id(), tmp_as_dyn.clone());
-        RUN_MANAGER.lock().add_task(get_current_cpu_id(), gc_task);
+        let scheduler = Arc::new(SpinNoIrq::new(Scheduler::new()));
+        REAL_RUN_QUEUE[hartid].init_by(scheduler.clone());
+        let tmp = Arc::new(SpinNoIrq::new(Self { scheduler: scheduler.clone() })) ;
+        let tmp_as_dyn = scheduler.clone() as Arc<SpinNoIrq<dyn BaseScheduler<SchedItem = Arc<AxTask>> + Send + 'static>>;
+        RUN_MANAGER.lock().init(hartid, tmp_as_dyn.clone());
+        RUN_MANAGER.lock().add_task(hartid, gc_task);
         tmp
     }
 }
@@ -263,15 +259,19 @@ cfg_if::cfg_if! {
 if #[cfg(feature = "sched_cfs")] {
     pub(crate) fn init() {
         RUN_MANAGER.init_by(SpinNoIrq::new(Manager::new()));
+        for i in 0..axconfig::SMP {
+            RUN_QUEUE[i].init_by(AxRunQueue::new(0, i));
+        }
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE, 0);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
-
+        /*loop {
+            
+        }*/
+    
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
-
-        RUN_QUEUE[get_current_cpu_id()].init_by(AxRunQueue::new(0));
-        //RUN_MANAGER.lock().init(get_current_cpu_id(), Arc::new(RUN_QUEUE[get_current_cpu_id()]));
+    
         unsafe { CurrentTask::init_current(main_task) }
     }
 } else if #[cfg(feature = "sched_rms")] {
@@ -295,15 +295,19 @@ if #[cfg(feature = "sched_cfs")] {
 } else {
     pub(crate) fn init() {
         RUN_MANAGER.init_by(SpinNoIrq::new(Manager::new()));
+        for i in 0..axconfig::SMP {
+            RUN_QUEUE[i].init_by(AxRunQueue::new(i));
+        }
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
+        /*loop {
+            
+        }*/
     
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     
-        RUN_QUEUE[get_current_cpu_id()].init_by(AxRunQueue::new());
-        //RUN_MANAGER.lock().init(get_current_cpu_id(), Arc::new(RUN_QUEUE[get_current_cpu_id()]));
         unsafe { CurrentTask::init_current(main_task) }
     }
 }
