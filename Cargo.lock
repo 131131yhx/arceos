@@ -663,6 +663,10 @@ dependencies = [
 [[package]]
 name = "handler_table"
 version = "0.1.0"
+dependencies = [
+ "axlog",
+ "log",
+]
 
 [[package]]
 name = "hash32"

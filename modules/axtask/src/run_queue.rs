@@ -41,30 +41,36 @@ impl AxRunQueue {
 cfg_if::cfg_if! {
     if #[cfg(feature = "sched_cfs")] {
     pub fn new(_nice: isize) -> Arc<SpinNoIrq<Self>> {
+        loop {
+            info!("qwq");
+        }
         let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE, _nice);
         let scheduler = Scheduler::new();
         let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTaskInner>> + Send + 'static>>));
+        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
         RUN_MANAGER.lock().init(get_current_cpu_id(), tmp_as_dyn.clone());
         RUN_MANAGER.lock().add_task(get_current_cpu_id(), gc_task);
         tmp
     }
 } else if #[cfg(feature = "sched_rms")] {
-    pub fn new(runtime: usize, period: usize) -> Arc<SpinNoIrq<Self>> {
+    pub fn new(runtime: usize, period: usize, hartid: usize) -> Arc<SpinNoIrq<Self>> {
         let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE, runtime, period);
         let scheduler = Scheduler::new();
         let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTaskInner>> + Send + 'static>>));
-        RUN_MANAGER.lock().init(get_current_cpu_id(), tmp_as_dyn.clone());
-        RUN_MANAGER.lock().add_task(get_current_cpu_id(), gc_task);
+        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
+        RUN_MANAGER.lock().init(hartid, tmp_as_dyn.clone());
+        RUN_MANAGER.lock().add_task(hartid, gc_task);
         tmp
     }
 } else {
     pub fn new() -> Arc<SpinNoIrq<Self>> {
+        loop {
+            info!("qwq");
+        }
         let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE);
         let scheduler = Scheduler::new();
         let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTaskInner>> + Send + 'static>>));
+        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
         RUN_MANAGER.lock().init(get_current_cpu_id(), tmp_as_dyn.clone());
         RUN_MANAGER.lock().add_task(get_current_cpu_id(), gc_task);
         tmp
@@ -79,8 +85,9 @@ cfg_if::cfg_if! {
     }
 
     pub fn scheduler_timer_tick(&mut self) {
+        info!("sakjdhaskjdsakj");
         let curr = crate::current();
-        if !curr.is_idle() && RUN_MANAGER.lock().task_tick(get_current_cpu_id(), curr.as_task_ref()) {
+        if !curr.is_idle() && RUN_MANAGER.lock().task_tick(get_current_cpu_id(), curr.as_task_ref(), true) {
             #[cfg(feature = "preempt")]
             curr.set_preempt_pending(true);
         }
@@ -268,6 +275,9 @@ if #[cfg(feature = "sched_cfs")] {
 } else if #[cfg(feature = "sched_rms")] {
     pub(crate) fn init() {
         RUN_MANAGER.init_by(SpinNoIrq::new(Manager::new()));
+        for i in 0..axconfig::SMP {
+            RUN_QUEUE[i].init_by(AxRunQueue::new(0, 1, i));
+        }
         const IDLE_TASK_STACK_SIZE: usize = 4096;
         let idle_task = TaskInner::new(|| crate::run_idle(), "idle", IDLE_TASK_STACK_SIZE, 0, 1);
         IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
@@ -278,7 +288,6 @@ if #[cfg(feature = "sched_cfs")] {
         let main_task = TaskInner::new_init("main");
         main_task.set_state(TaskState::Running);
     
-        RUN_QUEUE[get_current_cpu_id()].init_by(AxRunQueue::new(0, 1));
         unsafe { CurrentTask::init_current(main_task) }
     }
 } else {
@@ -305,16 +314,16 @@ pub(crate) fn init_secondary() {
     unsafe { CurrentTask::init_current(idle_task) }
 }
 use load_balance_manager::SimpleRunQueueOperations;
-use crate::AxTaskInner;
 
+use crate::AxTask;
 
 impl SimpleRunQueueOperations for AxRunQueue {
-    type SchedItem = Arc<AxTaskInner>;
+    type SchedItem = Arc<AxTask>;
     fn simple_init(&mut self) {
         self.scheduler.init();
     }
     fn simple_add_task(&mut self, task: Self::SchedItem) {
-        self.scheduler.add_task(task.clone());
+        self.scheduler.add_task(task);
     }
     fn simple_remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
         self.scheduler.remove_task(task)
@@ -323,8 +332,7 @@ impl SimpleRunQueueOperations for AxRunQueue {
         self.scheduler.pick_next_task()
     }
     fn simple_put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
-        self.scheduler.put_prev_task(prev.clone(), preempt);
-        info!("qwq88 {}", Arc::strong_count(&prev));
+        self.scheduler.put_prev_task(prev, preempt);
     }
     fn simple_task_tick(&mut self, current: &Self::SchedItem) -> bool {
         self.scheduler.task_tick(current)

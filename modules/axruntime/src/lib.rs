@@ -142,6 +142,9 @@ pub extern "C" fn rust_main(cpu_id: usize, dtb: usize) -> ! {
 
     info!("Initialize interrupt handlers...");
     init_interrupt();
+    /*loop {
+        info!("qwq");
+    }*/
 
     #[cfg(feature = "smp")]
     self::mp::start_secondary_cpus(cpu_id);
@@ -238,5 +241,6 @@ fn init_interrupt() {
     });
 
     // Enable IRQs before starting app
+
     axhal::arch::enable_irqs();
 }

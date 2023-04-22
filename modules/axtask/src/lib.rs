@@ -77,35 +77,34 @@ pub use self::wait_queue::WaitQueue;
 
 cfg_if::cfg_if! {
     if #[cfg(feature = "sched_fifo")] {
-        type AxTaskInner = scheduler::FifoTask<TaskInner>;
+        type AxTask = scheduler::FifoTask<TaskInner>;
         type Scheduler = scheduler::FifoScheduler<TaskInner>;
     } else if #[cfg(feature = "sched_rr")] {
         const MAX_TIME_SLICE: usize = 5;
-        type AxTaskInner = scheduler::RRTask<TaskInner, MAX_TIME_SLICE>;
+        type AxTask = scheduler::RRTask<TaskInner, MAX_TIME_SLICE>;
         type Scheduler = scheduler::RRScheduler<TaskInner, MAX_TIME_SLICE>;
     } else if #[cfg(feature = "sched_cfs")] {
-        type AxTaskInner = scheduler::CFTask<TaskInner>;
+        type AxTask = scheduler::CFTask<TaskInner>;
         type Scheduler = scheduler::CFScheduler<TaskInner>;
     } else if #[cfg(feature = "sched_sjf")] {
         const alpha_a: usize = 1;
         const alpha_log_b: usize = 4; // 1/16
-        type AxTaskInner = scheduler::SJFTask<TaskInner, alpha_a, alpha_log_b>;
+        type AxTask = scheduler::SJFTask<TaskInner, alpha_a, alpha_log_b>;
         type Scheduler = scheduler::SJFScheduler<TaskInner, alpha_a, alpha_log_b>;
     } else if #[cfg(feature = "sched_mlfq")] {
         const QNUM: usize = 8;
         const BASTTICK: usize = 1;
         const RESETTICK: usize = 100_000;
-        type AxTaskInner = scheduler::MLFQTask<TaskInner, QNUM, BASTTICK, RESETTICK>;
+        type AxTask = scheduler::MLFQTask<TaskInner, QNUM, BASTTICK, RESETTICK>;
         type Scheduler = scheduler::MLFQScheduler<TaskInner, QNUM, BASTTICK, RESETTICK>;
     } else if #[cfg(feature = "sched_rms")] {
-        type AxTaskInner = scheduler::RMSTask<TaskInner>;
+        type AxTask = scheduler::RMSTask<TaskInner>;
         type Scheduler = scheduler::RMScheduler<TaskInner>;
     }
 }
 
 const SMP : usize = axconfig::SMP;
-type AxTask = load_balance_manager::NaiveTask<AxTaskInner, TaskInner>;
-type Manager = load_balance_manager::NaiveManager<AxTaskInner, TaskInner, SMP>;
+type Manager = load_balance_manager::NaiveManager<AxTask, SMP>;
 
 type AxTaskRef = Arc<AxTask>;
 
@@ -143,7 +142,9 @@ pub fn init_scheduler_secondary() {
 /// Handle periodic timer ticks for task manager, e.g. advance scheduler, update timer.
 pub fn on_timer_tick() {
     self::timers::check_events();
+    info!("qwqakjfkash {}", get_current_cpu_id());
     RUN_QUEUE[get_current_cpu_id()].lock().scheduler_timer_tick();
+    info!("qwqakjfkash ok");
 }
 
 cfg_if::cfg_if! {
@@ -161,6 +162,7 @@ if #[cfg(feature = "sched_cfs")] {
     where
         F: FnOnce() + Send + 'static,
     {
+        info!("qpoipoaispdasjz");
         let task = TaskInner::new(f, "", axconfig::TASK_STACK_SIZE, runtime, period);
         RUN_QUEUE[get_current_cpu_id()].lock().add_task(task);
     }
@@ -178,19 +180,23 @@ if #[cfg(feature = "sched_cfs")] {
 
 
 pub fn yield_now() {
+    info!("qpwoipoias");
     RUN_QUEUE[get_current_cpu_id()].lock().yield_current();
 }
 
 pub fn sleep(dur: core::time::Duration) {
+    info!("qpwoipoias1");
     let deadline = axhal::time::current_time() + dur;
     RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
 pub fn sleep_until(deadline: axhal::time::TimeValue) {
+    info!("qpwoipoias2");
     RUN_QUEUE[get_current_cpu_id()].lock().sleep_until(deadline);
 }
 
 pub fn exit(exit_code: i32) -> ! {
+    info!("qpwoipoias3");
     RUN_QUEUE[get_current_cpu_id()].lock().exit_current(exit_code)
 }
 
@@ -218,6 +224,7 @@ pub fn sleep_until(deadline: axhal::time::TimeValue) {
 } // cfg_if::cfg_if!
 
 pub fn run_idle() -> ! {
+    info!("aoqpwoipeqipoeiqwop");
     loop {
         yield_now();
         debug!("idle task: waiting for IRQs...");

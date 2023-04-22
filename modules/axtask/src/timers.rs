@@ -16,6 +16,7 @@ struct TaskWakeupEvent(AxTaskRef);
 
 impl TimerEvent for TaskWakeupEvent {
     fn callback(self, _now: TimeValue) {
+        info!("opoqiwopeiqopwi");
         let mut rq = RUN_QUEUE[get_current_cpu_id()].lock();
         self.0.set_in_timer_list(false);
         rq.unblock_task(self.0, true);
@@ -23,23 +24,30 @@ impl TimerEvent for TaskWakeupEvent {
 }
 
 pub fn set_alarm_wakeup(deadline: TimeValue, task: AxTaskRef) {
+    info!("opoqiwopeiqopwi2");
     let mut timers = TIMER_LIST.lock();
     task.set_in_timer_list(true);
     timers.set(deadline, TaskWakeupEvent(task));
 }
 
 pub fn cancel_alarm(task: &AxTaskRef) {
+    info!("opoqiwopeiqopwi3");
     let mut timers = TIMER_LIST.lock();
     task.set_in_timer_list(false);
     timers.cancel(|t| Arc::ptr_eq(&t.0, task));
 }
 
 pub fn check_events() {
+    info!("opoqiwopeiqopwi4");
     loop {
         let now = current_time();
+        info!("opoqiwopeiqopwi4a");
         let event = TIMER_LIST.lock().expire_one(now);
+        info!("opoqiwopeiqopwi4b");
         if let Some((_deadline, event)) = event {
+            info!("opoqiwopeiqopwi4c");
             event.callback(now);
+            info!("opoqiwopeiqopwi4d");
         } else {
             break;
         }
@@ -47,5 +55,6 @@ pub fn check_events() {
 }
 
 pub fn init() {
+    info!("opoqiwopeiqopwi5");
     TIMER_LIST.init_by(SpinNoIrq::new(TimerList::new()));
 }

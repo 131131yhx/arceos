@@ -5,7 +5,7 @@
 mod naive;
 extern crate alloc;
 
-pub use naive::{NaiveManager, NaiveTask};
+pub use naive::NaiveManager;
 use alloc::sync::Arc;
 use spinlock::SpinNoIrq; // TODO: 不确定！！！
 
@@ -25,9 +25,8 @@ pub trait SimpleRunQueueOperations {
 
 pub trait BaseManager {
     type SchedItem;
-    type InnerSchedItem;
     // 需要逐个 Scheduler 进行 init
-    fn init(&mut self, cpu_id: usize, queue_ref: Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Self::InnerSchedItem> + Send + 'static>>);
+    fn init(&mut self, cpu_id: usize, queue_ref: Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Self::SchedItem> + Send + 'static>>);
     // 注意：默认是对所有调度器都初始化后，才会进行操作。
     // 下面全是对已有任务的封装，包含原有调度器的操作以及现有调度器的操作
     fn add_task(&mut self, cpu_id: usize, task: Self::SchedItem);

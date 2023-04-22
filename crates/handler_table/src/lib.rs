@@ -1,6 +1,7 @@
 #![no_std]
 
 use core::sync::atomic::{AtomicUsize, Ordering};
+use log::info;
 
 pub type Handler = fn();
 
