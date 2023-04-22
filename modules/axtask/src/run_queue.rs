@@ -11,6 +11,7 @@ use crate::get_current_cpu_id;
 use lazy_static::lazy_static;
 use crate::Manager;
 use load_balance_manager::BaseManager;
+use crate::AxTask;
 
 
 // TODO: per-CPU
@@ -18,6 +19,7 @@ use load_balance_manager::BaseManager;
 use array_init::array_init;
 lazy_static! {
     pub(crate) static ref RUN_QUEUE: [LazyInit<Arc<SpinNoIrq<AxRunQueue>>>; axconfig::SMP] = array_init(|_| LazyInit::new());
+    pub(crate) static ref REAL_RUN_QUEUE: [LazyInit<Arc<SpinNoIrq<Scheduler>>>; axconfig::SMP] = array_init(|_| LazyInit::new());
 }
 
 pub(crate) static RUN_MANAGER: LazyInit<SpinNoIrq<Manager>> = LazyInit::new();
@@ -33,9 +35,8 @@ static WAIT_FOR_EXIT: WaitQueue = WaitQueue::new();
 static IDLE_TASK: LazyInit<AxTaskRef> = LazyInit::new();
 
 pub(crate) struct AxRunQueue {
-    scheduler: Scheduler,
+    scheduler: Arc<SpinNoIrq<Scheduler>>,
 }
-use scheduler::RMSTask;
 impl AxRunQueue {
     
 cfg_if::cfg_if! {
@@ -55,9 +56,10 @@ cfg_if::cfg_if! {
 } else if #[cfg(feature = "sched_rms")] {
     pub fn new(runtime: usize, period: usize, hartid: usize) -> Arc<SpinNoIrq<Self>> {
         let gc_task = TaskInner::new(gc_entry, "gc", axconfig::TASK_STACK_SIZE, runtime, period);
-        let scheduler = Scheduler::new();
-        let tmp = Arc::new(SpinNoIrq::new(Self { scheduler })) ;
-        let tmp_as_dyn = Arc::clone(&((tmp.clone()) as Arc<SpinNoIrq<dyn SimpleRunQueueOperations<SchedItem = Arc<AxTask>> + Send + 'static>>));
+        let scheduler = Arc::new(SpinNoIrq::new(Scheduler::new()));
+        REAL_RUN_QUEUE[hartid].init_by(scheduler.clone());
+        let tmp = Arc::new(SpinNoIrq::new(Self { scheduler: scheduler.clone() })) ;
+        let tmp_as_dyn = scheduler.clone() as Arc<SpinNoIrq<dyn BaseScheduler<SchedItem = Arc<AxTask>> + Send + 'static>>;
         RUN_MANAGER.lock().init(hartid, tmp_as_dyn.clone());
         RUN_MANAGER.lock().add_task(hartid, gc_task);
         tmp
@@ -87,7 +89,7 @@ cfg_if::cfg_if! {
     pub fn scheduler_timer_tick(&mut self) {
         info!("sakjdhaskjdsakj");
         let curr = crate::current();
-        if !curr.is_idle() && RUN_MANAGER.lock().task_tick(get_current_cpu_id(), curr.as_task_ref(), true) {
+        if !curr.is_idle() && RUN_MANAGER.lock().task_tick(get_current_cpu_id(), curr.as_task_ref()) {
             #[cfg(feature = "preempt")]
             curr.set_preempt_pending(true);
         }
@@ -312,29 +314,4 @@ pub(crate) fn init_secondary() {
     idle_task.set_state(TaskState::Running);
     IDLE_TASK.with_current(|i| i.init_by(idle_task.clone()));
     unsafe { CurrentTask::init_current(idle_task) }
-}
-use load_balance_manager::SimpleRunQueueOperations;
-
-use crate::AxTask;
-
-impl SimpleRunQueueOperations for AxRunQueue {
-    type SchedItem = Arc<AxTask>;
-    fn simple_init(&mut self) {
-        self.scheduler.init();
-    }
-    fn simple_add_task(&mut self, task: Self::SchedItem) {
-        self.scheduler.add_task(task);
-    }
-    fn simple_remove_task(&mut self, task: &Self::SchedItem) -> Option<Self::SchedItem> {
-        self.scheduler.remove_task(task)
-    }
-    fn simple_pick_next_task(&mut self) -> Option<Self::SchedItem> {
-        self.scheduler.pick_next_task()
-    }
-    fn simple_put_prev_task(&mut self, prev: Self::SchedItem, preempt: bool) {
-        self.scheduler.put_prev_task(prev, preempt);
-    }
-    fn simple_task_tick(&mut self, current: &Self::SchedItem) -> bool {
-        self.scheduler.task_tick(current)
-    }
 }
