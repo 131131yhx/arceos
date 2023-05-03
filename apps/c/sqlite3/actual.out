@@ -1,0 +1,14 @@
+make[1]: Entering directory '/home/lastans7/arceos'
+-e     [92;1mBuilding[0m App: sqlite3, Arch: riscv64, Platform: qemu-virt-riscv, Language: c
+cargo rustc -Zbuild-std=core,alloc -Zbuild-std-features=compiler-builtins-mem --target riscv64gc-unknown-none-elf --target-dir /home/lastans7/arceos/target --release --crate-type staticlib --features "libax/platform-qemu-virt-riscv libax/log-level-info libax/fs libax/default libax/fp_simd libax/alloc libax/paging libax/fs libax/cbindings"  --no-default-features -p libax -- -Clink-arg=-T/home/lastans7/arceos/modules/axhal/linker_riscv64.lds
+   Compiling axhal v0.1.0 (/home/lastans7/arceos/modules/axhal)
+   Compiling axtask v0.1.0 (/home/lastans7/arceos/modules/axtask)
+   Compiling axdriver v0.1.0 (/home/lastans7/arceos/modules/axdriver)
+   Compiling axsync v0.1.0 (/home/lastans7/arceos/modules/axsync)
+   Compiling axfs v0.1.0 (/home/lastans7/arceos/modules/axfs)
+   Compiling axruntime v0.1.0 (/home/lastans7/arceos/modules/axruntime)
+   Compiling libax v0.1.0 (/home/lastans7/arceos/ulib/libax)
+    Finished release [optimized] target(s) in 4.23s
+riscv64-linux-musl-gcc -DAX_CONFIG_DEFAULT -DAX_CONFIG_FP_SIMD -DAX_CONFIG_ALLOC -DAX_CONFIG_PAGING -DAX_CONFIG_FS -static -no-pie -fno-builtin -ffreestanding -nostdinc -Wall -Iulib/c_libax/include -Iulib/c_libax/../libax -O3 -march=rv64gc -mabi=lp64d -mcmodel=medany -c -o /home/lastans7/arceos/apps/c/sqlite3/main.o /home/lastans7/arceos/apps/c/sqlite3/main.c
+riscv64-linux-musl-gcc -DAX_CONFIG_DEFAULT -DAX_CONFIG_FP_SIMD -DAX_CONFIG_ALLOC -DAX_CONFIG_PAGING -DAX_CONFIG_FS -static -no-pie -fno-builtin -ffreestanding -nostdinc -Wall -Iulib/c_libax/include -Iulib/c_libax/../libax -O3 -march=rv64gc -mabi=lp64d -mcmodel=medany -DSQLITE_THREADSAFE=0 -DSQLITE_OMIT_FLOATING_POINT -DSQLITE_OMIT_LOAD_EXTENSION -DSQLITE_DEBUG -w -c -o /home/lastans7/arceos/apps/c/sqlite3/sqlite3.o /home/lastans7/arceos/apps/c/sqlite3/sqlite3.c
+make[1]: *** [/home/lastans7/arceos/apps/c/sqlite3/axbuild.mk:8: /home/lastans7/arceos/apps/c/sqlite3/sqlite3.o] Interrupt
