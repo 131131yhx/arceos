@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["ax_clock_gettime","ax_close","ax_exit","ax_free","ax_fstat","ax_getcwd","ax_getpid","ax_lseek","ax_lstat","ax_malloc","ax_nanosleep","ax_open","ax_panic","ax_print_str","ax_rand_u32","ax_read","ax_srand","ax_stat","ax_write"]};
