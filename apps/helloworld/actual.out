@@ -1,0 +1,14 @@
+make: Entering directory '/home/lastans7/arceos'
+    [92;1mBuilding[0m App: helloworld, Arch: x86_64, Platform: pc-x86, Language: rust
+cargo rustc --target x86_64-unknown-none --target-dir /home/lastans7/arceos/target --release  --features "libax/platform-pc-x86 libax/smp libax/log-level-info libax/bus-pci "  --manifest-path /home/lastans7/arceos/apps/helloworld/Cargo.toml -- -Clink-args="-T/home/lastans7/arceos/modules/axhal/linker_x86_64.lds -no-pie"
+   Compiling axconfig v0.1.0 (/home/lastans7/arceos/modules/axconfig)
+   Compiling axhal v0.1.0 (/home/lastans7/arceos/modules/axhal)
+   Compiling libax v0.1.0 (/home/lastans7/arceos/ulib/libax)
+   Compiling axtask v0.1.0 (/home/lastans7/arceos/modules/axtask)
+   Compiling axruntime v0.1.0 (/home/lastans7/arceos/modules/axruntime)
+   Compiling arceos-helloworld v0.1.0 (/home/lastans7/arceos/apps/helloworld)
+error: no global memory allocator found but one is required; link to std or add `#[global_allocator]` to a static item that implements the GlobalAlloc trait
+
+error: could not compile `arceos-helloworld` (bin "arceos-helloworld") due to previous error
+make: *** [scripts/make/build.mk:16: _cargo_build] Error 101
+make: Leaving directory '/home/lastans7/arceos'
