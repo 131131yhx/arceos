@@ -15,7 +15,7 @@ struct TaskParam {
     value: u64,
     nice: isize,
 }
-const PAYLOAD_KIND: usize = 32000;
+const PAYLOAD_KIND: usize = 64000;
 
 fn load(n: &u64) -> u64 {
     // time consuming is linear with *n
