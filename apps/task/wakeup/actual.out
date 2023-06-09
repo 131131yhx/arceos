@@ -1,0 +1,141 @@
+make: Entering directory '/home/lastans7/arceos'
+    [96;1mRunning[0m qemu-system-x86_64 -m 128M -smp 4 -machine q35 -kernel /home/lastans7/arceos/apps/task/unbalance/unbalance_pc-x86.elf -nographic 
+c[?7l[2J[0mSeaBIOS (version 1.13.0-1ubuntu1.1)
+
+
+iPXE (http://ipxe.org) 00:02.0 CA00 PCI2.10 PnP PMM+07F8C640+07ECC640 CA00
+Press Ctrl-B to configure iPXE (PCI 00:02.0)...                                                                               
+
+
+Booting from ROM..
+Initialize IDT & GDT...
+
+       d8888                            .d88888b.   .d8888b.
+      d88888                           d88P" "Y88b d88P  Y88b
+     d88P888                           888     888 Y88b.
+    d88P 888 888d888  .d8888b  .d88b.  888     888  "Y888b.
+   d88P  888 888P"   d88P"    d8P  Y8b 888     888     "Y88b.
+  d88P   888 888     888      88888888 888     888       "888
+ d8888888888 888     Y88b.    Y8b.     Y88b. .d88P Y88b  d88P
+d88P     888 888      "Y8888P  "Y8888   "Y88888P"   "Y8888P"
+
+arch = x86_64
+platform = pc-x86
+smp = 4
+build_mode = release
+log_level = info
+
+[37m[  0.000822 axruntime:124] [32mLogging is enabled.[m
+[m[37m[  0.001716 axruntime:125] [32mPrimary CPU 0 started, dtb = 0x0.[m
+[m[37m[  0.002019 axruntime:127] [32mFound physcial memory regions:[m
+[m[37m[  0.002189 axruntime:129] [32m  [PA:0x0, PA:0x9f000) low memory (READ | WRITE | RESERVED)[m
+[m[37m[  0.002465 axruntime:129] [32m  [PA:0x200000, PA:0x21d000) .text (READ | EXECUTE | RESERVED)[m
+[m[37m[  0.002620 axruntime:129] [32m  [PA:0x21d000, PA:0x221000) .rodata (READ | RESERVED)[m
+[m[37m[  0.002749 axruntime:129] [32m  [PA:0x221000, PA:0x228000) .data (READ | WRITE | RESERVED)[m
+[m[37m[  0.002875 axruntime:129] [32m  [PA:0x228000, PA:0x22c000) .percpu (READ | WRITE | RESERVED)[m
+[m[37m[  0.003004 axruntime:129] [32m  [PA:0x22c000, PA:0x32c000) boot stack (READ | WRITE | RESERVED)[m
+[m[37m[  0.003135 axruntime:129] [32m  [PA:0x32c000, PA:0x350000) .bss (READ | WRITE | RESERVED)[m
+[m[37m[  0.003259 axruntime:129] [32m  [PA:0xb0000000, PA:0xc0000000) mmio (READ | WRITE | DEVICE | RESERVED)[m
+[m[37m[  0.003399 axruntime:129] [32m  [PA:0xfe000000, PA:0xfec00000) mmio (READ | WRITE | DEVICE | RESERVED)[m
+[m[37m[  0.003549 axruntime:129] [32m  [PA:0xfec00000, PA:0xfec01000) mmio (READ | WRITE | DEVICE | RESERVED)[m
+[m[37m[  0.003686 axruntime:129] [32m  [PA:0xfed00000, PA:0xfed01000) mmio (READ | WRITE | DEVICE | RESERVED)[m
+[m[37m[  0.003821 axruntime:129] [32m  [PA:0xfee00000, PA:0xfee01000) mmio (READ | WRITE | DEVICE | RESERVED)[m
+[m[37m[  0.003961 axruntime:129] [32m  [PA:0x350000, PA:0x8000000) free memory (READ | WRITE | FREE)[m
+[m[37m[  0.004103 axruntime:140] [32mInitialize global memory allocator...[m
+[m[37m[  0.005068 axruntime:146] [32mInitialize kernel page table...[m
+[m[37m[  0.006158 axruntime:150] [32mInitialize platform devices...[m
+[m[37m[  0.006284 axhal::platform::pc_x86::apic:87] [32mInitialize Local APIC...[m
+[m[37m[  0.006445 axhal::platform::pc_x86::apic:105] [32mUsing xAPIC.[m
+[m[37m[  0.006866 axhal::platform::pc_x86::apic:116] [32mInitialize IO APIC...[m
+[m[37m[  0.007218 axtask::api:74] [32mInitialize scheduling...[m
+[m[37m[  0.008909 axtask::api:80] [32m  use Completely Fair scheduler.[m
+[m[37m[  0.009052 axtask::api:81] [32m  use basic method load balance manager.[m
+[m[37m[  0.019570 axruntime::mp:35] [32mSecondary CPU 1 started.[m
+[m[37m[  0.020263 axruntime::mp:45] [32mSecondary CPU 1 init OK.[m
+[m[37m[  0.029691 axruntime::mp:35] [32mSecondary CPU 2 started.[m
+[m[37m[  0.030480 axruntime::mp:45] [32mSecondary CPU 2 init OK.[m
+[m[37m[  0.040261 axruntime::mp:35] [32mSecondary CPU 3 started.[m
+[m[37m[  0.040429 axruntime:176] [32mInitialize interrupt handlers...[m
+[m[37m[  0.041037 axruntime::mp:45] [32mSecondary CPU 3 init OK.[m
+[m[37m[  0.043214 axruntime:180] [32mPrimary CPU 0 init OK.[m
+[mpart 24: TaskId(10) [0, 30)
+part 20: TaskId(14) [0, 15)
+part 16: TaskId(18) [0, 7)
+part 12: TaskId(22) [0, 3)
+part 8: TaskId(26) [0, 5)
+part 4: TaskId(30) [0, 5)
+part 21: TaskId(13) [0, 20)
+part 17: TaskId(17) [0, 8)
+part 13: TaskId(21) [0, 4)
+part 0: TaskId(34) [0, 100)
+part 9: TaskId(25) [0, 5)
+part 23: TaskId(11) [0, 30)
+part 22: TaskId(12) [0, 25)
+part 5: TaskId(29) [0, 5)
+part 19: TaskId(15) [0, 10)
+part 1: TaskId(33) [0, 5)
+part 18: TaskId(16) [0, 9)
+part 15: TaskId(19) [0, 6)
+part 14: TaskId(20) [0, 5)
+part 10: TaskId(24) [0, 5)
+part 6: TaskId(28) [0, 5)
+part 11: TaskId(23) [0, 2)
+part 3: TaskId(31) [0, 5)
+part 2: TaskId(32) [0, 5)
+part 7: TaskId(27) [0, 5)
+part 7: TaskId(27) finished
+part 3: TaskId(31) finished
+part 16: TaskId(18) finished
+part 11: TaskId(23) finished
+part 6: TaskId(28) finished
+part 5: TaskId(29) finished
+part 10: TaskId(24) finished
+part 18: TaskId(16) finished
+part 21: TaskId(13) finished
+part 1: TaskId(33) finished
+part 19: TaskId(15) finished
+part 14: TaskId(20) finished
+part 22: TaskId(12) finished
+part 15: TaskId(19) finished
+part 23: TaskId(11) finished
+part 13: TaskId(21) finished
+part 9: TaskId(25) finished
+part 4: TaskId(30) finished
+part 12: TaskId(22) finished
+part 8: TaskId(26) finished
+part 2: TaskId(32) finished
+part 17: TaskId(17) finished
+part 24: TaskId(10) finished
+part 20: TaskId(14) finished
+part 0: TaskId(34) finished
+sum = 5310778284
+leave time:
+task 0 = 11845ms
+task 1 = 9177ms
+task 2 = 8757ms
+task 3 = 4047ms
+task 4 = 12358ms
+task 5 = 6351ms
+task 6 = 3501ms
+task 7 = 11732ms
+task 8 = 1262ms
+task 9 = 8911ms
+task 10 = 7531ms
+task 11 = 9727ms
+task 12 = 10732ms
+task 13 = 1447ms
+task 14 = 3404ms
+task 15 = 10093ms
+task 16 = 11492ms
+task 17 = 932ms
+task 18 = 2339ms
+task 19 = 2525ms
+task 20 = 10137ms
+task 21 = 1090ms
+task 22 = 11568ms
+task 23 = 4725ms
+task 24 = 13406ms
+max leave time: 13406ms
+Unbalance tests run OK!
+[37m[ 14.800436 2:2 axhal::platform::pc_x86::misc:7] [32mShutting down...[m
+[mmake: Leaving directory '/home/lastans7/arceos'
