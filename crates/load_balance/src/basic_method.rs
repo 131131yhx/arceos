@@ -12,7 +12,7 @@ pub struct BasicMethod {
     /// self queue id
     id: AtomicUsize,
     /// pointers for BaseLoadBalance for each queue
-    pointers: SpinNoIrq<Vec<Arc<BasicMethod>>>,
+    pointers: Vec<Arc<BasicMethod>>,
     /// estimated weight for its queue
     weight: AtomicIsize,
 }
@@ -24,7 +24,7 @@ impl BasicMethod {
             weight: AtomicIsize::new(0),
             smp: AtomicUsize::new(0),
             id: AtomicUsize::new(0),
-            pointers: SpinNoIrq::new(Vec::new()),
+            pointers: Vec::new(),
         }
     }
     /// get the name of load balance manager
@@ -35,10 +35,10 @@ impl BasicMethod {
 
 impl BasicMethod {
     /// Initializes the load balance manager.
-    pub fn init(&self, smp: usize, loadbalancearr: Vec<Arc<BasicMethod>>) {
+    pub fn init(&mut self, smp: usize, loadbalancearr: Vec<Arc<BasicMethod>>) {
         self.smp.store(smp, Ordering::Release);
         for i in 0..smp {
-            self.pointers.lock().push(loadbalancearr[i].clone());
+            self.pointers.push(loadbalancearr[i].clone());
         }
     }
 }
@@ -50,7 +50,7 @@ impl BaseLoadBalance for BasicMethod {
         let mut arg: isize = -1;
         for i in 0..self.smp.load(Ordering::Acquire) {
             if ((aff >> i) & 1) == 1 {
-                let tmp = self.pointers.lock()[i].weight.load(Ordering::Acquire);
+                let tmp = self.pointers[i].weight.load(Ordering::Acquire);
                 if arg == -1 || tmp < mn {
                     mn = tmp;
                     arg = i as isize;
@@ -64,11 +64,11 @@ impl BaseLoadBalance for BasicMethod {
     /// the detailed steal process is defined in axtask
     /// >= 0 if a target cpu is found, -1 if no need to steal
     fn find_stolen_cpu_id(&self) -> isize {
-        let mut mx: isize = self.pointers.lock()[0].weight.load(Ordering::Acquire);
+        let mut mx: isize = self.pointers[0].weight.load(Ordering::Acquire);
         let mut arg: usize = 0;
         //info!("qwq");
         for i in 1..self.smp.load(Ordering::Acquire) {
-            let tmp = self.pointers.lock()[i].weight.load(Ordering::Acquire);
+            let tmp = self.pointers[i].weight.load(Ordering::Acquire);
             if tmp > mx {
                 mx = tmp;
                 arg = i;

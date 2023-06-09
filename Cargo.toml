@@ -16,6 +16,7 @@ members = [
     "apps/task/priority",
     "apps/task/unbalance",
     "apps/task/static",
+    "apps/task/wakeup",
 
     "crates/allocator",
     "crates/arm_gic",

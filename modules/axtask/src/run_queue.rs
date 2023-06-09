@@ -12,9 +12,9 @@ use crate::task::{CurrentTask, TaskState};
 use crate::{AxTaskRef, LoadBalance, Scheduler, TaskInner, WaitQueue};
 
 lazy_static::lazy_static! {
-    pub(crate) static ref RUN_QUEUE: [LazyInit<Arc<AxRunQueue>>; axconfig::SMP] =
+    pub(crate) static ref RUN_QUEUE: [Arc<AxRunQueue>; axconfig::SMP] =
         array_init(|_| LazyInit::new());
-    pub(crate) static ref LOAD_BALANCE_ARR: [LazyInit<Arc<LoadBalance>>; axconfig::SMP] =
+    pub(crate) static ref LOAD_BALANCE_ARR: [Arc<LoadBalance>; axconfig::SMP] =
         array_init(|_| LazyInit::new());
 }
 
